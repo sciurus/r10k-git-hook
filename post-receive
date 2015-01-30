@@ -6,7 +6,19 @@ umask 0022
 
 while read oldrev newrev refname; do
     if [[ $refname =~ 'refs/heads/' ]]; then
-        branch=$(git rev-parse --symbolic --abbrev-ref $refname)
+        branch_tmp=$(git rev-parse --symbolic --abbrev-ref $refname)
+        # translating personal/user/label branches from gitolite to the personal_user_label format used by r10k
+        if [[ $branch_tmp == personal* ]]
+                then
+                branch=`echo $branch_tmp| tr '/' '_'`
+                echo ================================================
+                echo "It seems that your are using gitolite personal branches"
+                echo "http://gitolite.com/gitolite/user.html#pers"
+                echo "Some transformation is needed to make it work"
+                echo git branch:                          $branch_tmp
+                echo R10k environment to be deployed:     $branch
+                echo ================================================
+        fi
         files=$(git diff-tree -r --name-only --no-commit-id ${oldrev}..${newrev})
         if [[ $files =~ 'Puppetfile' ]]; then
             echo "r10k updating $branch environment and modules"
